@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <title>Tickets</title>
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" type="text/css" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    </head>
+    <body>
+        <nav class="navbar navbar-light bg-light static-top">
+            <div class="container">
+                <a class="navbar-brand" href="#!">Tickets</a>
+                <div class="d-flex" style="gap: 30px;">
+                    <form action="{% url 'open_all_tickets' %}" method="post">
+                        {% csrf_token %}
+                        <button 
+                            type="submit" 
+                            class="btn btn-secondary" 
+                            name="tickets" 
+                            value="{% for ticket in tickets %}{% if forloop.last %}{{ ticket.id }}{% else %}{{ ticket.id }},{% endif %}{% endfor %}"
+                        >Abrir todos os tickets</button>
+                    </form>
+                    <form action="{% url 'close_all_tickets' %}" method="post">
+                        {% csrf_token %}
+                        <button 
+                            name="tickets"
+                            type="submit" 
+                            class="btn btn-secondary"
+                            value="{% for ticket in tickets %}{% if forloop.last %}{{ ticket.id }}{% else %}{{ ticket.id }},{% endif %}{% endfor %}"
+                        >Fechar todos os tickets</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-sm">
+            <div class="row">
+                <div class="mt-5">
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            Ações
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                            <li><a class="dropdown-item" onclick="closeTickets()">Fechar</a></li>
+                            <li><a class="dropdown-item" onclick="openTickets()">Abrir</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <table class="table clickable-row">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th scope="col">Id</th>
+                            <th scope="col">Título</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                            <tr>
+                                <td>
+                                    <input 
+                                        class="form-check-input"
+                                        name="checkbox-ticket"
+                                        id="checkbox-{{ ticket.id }}"
+                                        type="checkbox"
+                                        value="{{ ticket.id }}"
+                                    />
+                                </td>
+                                <th scope="row">{{ ticket.id }}</td>
+                                <td>{{ ticket.title }}</td>
+                                <td>
+                                    {% if ticket.is_closed %}
+                                        Fechado
+                                    {% else %}
+                                        Aberto
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="alert alert-danger">
+                    Aberto(s): {{ count.opened }}
+                </div>
+                <div class="alert alert-success">
+                    Fechado(s): {{ count.closed }}
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+
+    <script>
+        function getSelectedIdsCheckboxes () {
+            const checkboxes = $('input[name="checkbox-ticket"]:checked')
+            const tickets = []
+            checkboxes.map(function () {
+                tickets.push(this.value)
+            })
+            return tickets.join(",")
+        }
+
+        function openTickets() {
+            $.post("{% url 'open_tickets_by_ids' %}", {
+                tickets: getSelectedIdsCheckboxes(),
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            }, function(data, Status) {
+                window.location = "/"
+            })
+        }
+
+        function closeTickets () {
+            $.post("{% url 'close_tickets_by_ids' %}", {
+                tickets: getSelectedIdsCheckboxes(),
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            }, function(data, Status) {
+                window.location = "/"
+            })
+        }
+    </script>
+</html>
